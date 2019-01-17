@@ -163,6 +163,7 @@ def make_metadata_doc(mtl_data, bucket_name, object_key):
         'lineage': {'source_datasets': {}},
     }
     doc = absolutify_paths(doc, bucket_name, object_key)
+    print(json.dumps(doc, indent=2))
     return doc
 
 
@@ -176,7 +177,7 @@ def get_s3_url(bucket_name, obj_key):
         bucket_name=bucket_name, obj_key=obj_key)
 
 
-def archive_document(doc, uri, index, sources_policy):
+def archive_document(doc, uri, index, sources_policy, require_lineage):
     def get_ids(dataset):
         ds = index.datasets.get(dataset.id, include_sources=True)
         for source in ds.sources.values():
@@ -189,15 +190,16 @@ def archive_document(doc, uri, index, sources_policy):
     logging.info("Archiving %s and all sources of %s", dataset.id, dataset.id)
 
 
-def add_dataset(doc, uri, index, sources_policy):
+def add_dataset(doc, uri, index, sources_policy, require_lineage):
     logging.info("Indexing %s", uri)
-    resolver = Doc2Dataset(index)
+    skip_lineage = not require_lineage
+    resolver = Doc2Dataset(index, skip_lineage=skip_lineage)
     dataset, err  = resolver(doc, uri)
     if err is not None:
         logging.error("%s", err)
     else:
         try:
-            index.datasets.add(dataset, sources_policy=sources_policy) # Source policy to be checked in sentinel 2 datase types
+            index.datasets.add(dataset, sources_policy=sources_policy, with_lineage=require_lineage) # Source policy to be checked in sentinel 2 datase types
         except changes.DocumentMismatchError as e:
             index.datasets.update(dataset, {tuple(): changes.allow_any})
         except Exception as e:
@@ -206,7 +208,7 @@ def add_dataset(doc, uri, index, sources_policy):
 
     return dataset, err
 
-def worker(config, bucket_name, prefix, suffix, start_date, end_date, func, unsafe, sources_policy, queue):
+def worker(config, bucket_name, prefix, suffix, start_date, end_date, func, unsafe, sources_policy, require_lineage, queue):
     dc=datacube.Datacube(config=config)
     index = dc.index
     s3 = boto3.resource("s3")
@@ -230,11 +232,11 @@ def worker(config, bucket_name, prefix, suffix, start_date, end_date, func, unsa
                 yaml.default_flow_style = False
                 data = yaml.load(raw)
             uri = get_s3_url(bucket_name, key)
-            cdt = data['creation_dt']
+            cdt = data.get('creation_dt', None)
             # Use the fact lexicographical ordering matches the chronological ordering
-            if cdt >= start_date and cdt < end_date:
+            if not cdt or cdt >= start_date and cdt < end_date:
                 logging.info("calling %s", func)
-                func(data, uri, index, sources_policy)
+                func(data, uri, index, sources_policy, require_lineage)
             queue.task_done()
         except Empty:
             break
@@ -242,7 +244,7 @@ def worker(config, bucket_name, prefix, suffix, start_date, end_date, func, unsa
             break
 
 
-def iterate_datasets(bucket_name, config, prefix, suffix, start_date, end_date, func, unsafe, sources_policy):
+def iterate_datasets(bucket_name, config, prefix, suffix, start_date, end_date, func, unsafe, sources_policy, require_lineage):
     manager = Manager()
     queue = manager.Queue()
 
@@ -254,7 +256,7 @@ def iterate_datasets(bucket_name, config, prefix, suffix, start_date, end_date, 
 
     processess = []
     for i in range(worker_count):
-        proc = Process(target=worker, args=(config, bucket_name, prefix, suffix, start_date, end_date, func, unsafe, sources_policy, queue,))
+        proc = Process(target=worker, args=(config, bucket_name, prefix, suffix, start_date, end_date, func, unsafe, sources_policy, require_lineage, queue))
         processess.append(proc)
         proc.start()
 
@@ -270,6 +272,7 @@ def iterate_datasets(bucket_name, config, prefix, suffix, start_date, end_date, 
 
 
 
+# TODO: add the lineage flag so it's configurable
 @click.command(help= "Enter Bucket name. Optional to enter configuration file to access a different database")
 @click.argument('bucket_name')
 @click.option('--config','-c',help="Pass the configuration file to access the database",
@@ -281,10 +284,11 @@ def iterate_datasets(bucket_name, config, prefix, suffix, start_date, end_date, 
 @click.option('--archive', is_flag=True, help="If true, datasets found in the specified bucket and prefix will be archived")
 @click.option('--unsafe', is_flag=True, help="If true, YAML will be parsed unsafely. Only use on trusted datasets. Only valid if suffix is yaml")
 @click.option('--sources_policy', default="verify", help="verify, ensure, skip")
-def main(bucket_name, config, prefix, suffix, start_date, end_date, archive, unsafe, sources_policy):
+@click.option('--require_lineage', is_flag=True, default=False, help="Set to require that lineage is present")
+def main(bucket_name, config, prefix, suffix, start_date, end_date, archive, unsafe, sources_policy, require_lineage):
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
     action = archive_document if archive else add_dataset
-    iterate_datasets(bucket_name, config, prefix, suffix, start_date, end_date, action, unsafe, sources_policy)
+    iterate_datasets(bucket_name, config, prefix, suffix, start_date, end_date, action, unsafe, sources_policy, require_lineage)
    
 
 if __name__ == "__main__":
