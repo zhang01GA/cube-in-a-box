@@ -230,10 +230,13 @@ def worker(config, bucket_name, prefix, suffix, start_date, end_date, func, unsa
                 yaml.default_flow_style = False
                 data = yaml.load(raw)
             uri = get_s3_url(bucket_name, key)
-            cdt = data['creation_dt']
-            # Use the fact lexicographical ordering matches the chronological ordering
-            if cdt >= start_date and cdt < end_date:
-                logging.info("calling %s", func)
+            if data.get('creation_dt') and start_date and end_date:
+                cdt = data['creation_dt']
+                # Use the fact lexicographical ordering matches the chronological ordering
+                if cdt >= start_date and cdt < end_date:
+                    logging.info("calling %s", func)
+                    func(data, uri, index, sources_policy)
+            else:
                 func(data, uri, index, sources_policy)
             queue.task_done()
         except Empty:

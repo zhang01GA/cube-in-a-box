@@ -63,3 +63,13 @@ update-infra:
 		--parameter file://parameters.json \
 		--tags Key=Name,Value=OpenDataCube \
 		--capabilities CAPABILITY_NAMED_IAM
+
+add-s1-product:
+	docker-compose exec jupyter datacube product add /opt/odc/scripts/s1g_gamma0_scene.yaml
+
+index-s1:
+	docker-compose exec jupyter bash -c \
+		"cd /opt/odc/scripts && python3 ./ls_public_bucket.py \
+			frontiersi-odc-test \
+			--prefix=s1-switzerland \
+			--suffix='.yaml'"
