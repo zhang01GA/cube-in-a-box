@@ -66,10 +66,11 @@ update-infra:
 
 add-s2-product:
 	docker-compose exec jupyter datacube product add /opt/odc/scripts/s2a_ard_granule.yaml
+	docker-compose exec jupyter datacube product add /opt/odc/scripts/s2b_ard_granule.yaml
 
 index-s2:
 	docker-compose exec jupyter bash -c \
 		"cd /opt/odc/scripts && python3 ./ls_public_bucket.py \
 			test-odc-conf \
-			--prefix=tasmania-2017-07-07 \
+			--prefix=tasmania-year \
 			--suffix='.yaml'"
