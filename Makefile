@@ -73,3 +73,17 @@ index-s1:
 			frontiersi-odc-test \
 			--prefix=s1-switzerland \
 			--suffix='.yaml'"
+
+index-s1-v2:
+	docker-compose exec jupyter bash -c \
+		"cd /opt/odc/scripts && python3 ./ls_public_bucket.py \
+			test-odc-conf \
+			--prefix=Copernicus_Backscatter_repro_cog/Sentinel-1/ \
+			--suffix='.yaml'"
+
+index-s1-v3:
+	docker-compose exec jupyter bash -c \
+		"cd /opt/odc/scripts && python3 ./ls_public_bucket.py \
+			frontiersi-odc-test \
+			--prefix=s1-rwanda \
+			--suffix='.yaml'"
