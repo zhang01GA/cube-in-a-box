@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 # coding: utf-8
 from xml.etree import ElementTree
 from pathlib import Path
@@ -163,7 +163,6 @@ def make_metadata_doc(mtl_data, bucket_name, object_key):
         'lineage': {'source_datasets': {}},
     }
     doc = absolutify_paths(doc, bucket_name, object_key)
-    print(json.dumps(doc, indent=2))
     return doc
 
 
@@ -271,8 +270,6 @@ def iterate_datasets(bucket_name, config, prefix, suffix, start_date, end_date, 
         proc.join()
 
 
-
-# TODO: add the lineage flag so it's configurable
 @click.command(help= "Enter Bucket name. Optional to enter configuration file to access a different database")
 @click.argument('bucket_name')
 @click.option('--config','-c',help="Pass the configuration file to access the database",
