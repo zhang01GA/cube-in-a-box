@@ -2,7 +2,7 @@ version: '3'
 
 services:
   postgres:
-    image: postgres:10.3
+    image: mdillon/postgis:10
     environment:
       - POSTGRES_DB=opendatacube
       - POSTGRES_PASSWORD=opendatacubepassword

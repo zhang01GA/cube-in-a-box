@@ -31,7 +31,7 @@ product-landsat:
 
 product-wofs:
 	docker-compose exec jupyter \
-		datacube product add /opt/odc/scripts/product_definitions/wofs.yaml
+		datacube product add /opt/odc/scripts/product_definitions/ls_usgs_wofs_scene.yaml
 
 product-fc:
 	docker-compose exec jupyter \
