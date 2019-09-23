@@ -27,7 +27,7 @@ from queue import Empty
 GUARDIAN = "GUARDIAN_QUEUE_EMPTY"
 AWS_PDS_TXT_SUFFIX = "MTL.txt"
 LANDSAT_XML_SUFFIX = 'T1.xml'
-
+GENERAL_LANDSAT_XML_SUFFIX = '.xml'
 
 MTL_PAIRS_RE = re.compile(r'(\w+)\s=\s(.*)')
 
@@ -202,6 +202,9 @@ def make_xml_doc(xmlstring, bucket_name, object_key):
     satellite = doc.find('.//satellite').text
     data_provider = doc.find('.//data_provider').text
     instrument = doc.find('.//instrument').text
+    path = doc.find('.//wrs').attrib['path']
+    row = doc.find('.//wrs').attrib['row']
+    region_code = f"{int(path):03d}{int(row):03d}"
 
     # other params like cloud_shadow, snow_ice, tile_grid, orientation_angle are also available
 
@@ -287,6 +290,7 @@ def make_xml_doc(xmlstring, bucket_name, object_key):
             # This is hardcoded now... needs to be not hardcoded!
             'product_type': 'LEVEL2_USGS',
             'creation_dt': acquisition_date,
+            'region_code': region_code,
             'platform': {'code': satellite},
             'instrument': {'name': instrument},
             'extent': {
@@ -445,7 +449,7 @@ def worker(config, bucket_name, prefix, suffix, start_date, end_date, func, unsa
                 # Attempt to process text document
                 txt_doc = _parse_group(iter(raw_string.split("\n")))['L1_METADATA_FILE']
                 data = make_metadata_doc(txt_doc, bucket_name, key)
-            elif suffix == LANDSAT_XML_SUFFIX:
+            elif suffix == LANDSAT_XML_SUFFIX or suffix == GENERAL_LANDSAT_XML_SUFFIX:
                 data = make_xml_doc(raw_string, bucket_name, key)
             else:
                 yaml = YAML(typ=safety, pure=False)
@@ -454,9 +458,14 @@ def worker(config, bucket_name, prefix, suffix, start_date, end_date, func, unsa
             if data:
                 uri = get_s3_url(bucket_name, key)
                 cdt = data['creation_dt']
-                # Use the fact lexicographical ordering matches the chronological ordering
-                if cdt >= start_date and cdt < end_date:
-                    # logging.info("calling %s", func)
+
+                # Only do the date check if we have dates set
+                if cdt and start_date and cdt:
+                    # Use the fact lexicographical ordering matches the chronological ordering
+                    if cdt >= start_date and cdt < end_date:
+                        # logging.info("calling %s", func)
+                        func(data, uri, index, sources_policy)
+                else:
                     func(data, uri, index, sources_policy)
             else:
                 logging.error("Failed to get data returned... skipping file.")

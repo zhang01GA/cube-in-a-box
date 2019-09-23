@@ -75,7 +75,7 @@ index-africa-vic-landsat:
 	docker-compose exec jupyter bash -c \
 		"cd /opt/odc/scripts && python3 ./ls_public_bucket.py deafrica-data \
 		-p test \
-		--suffix="T1.xml" \
+		--suffix=".xml" \
 		--start_date 1980-01-01 --end_date 2020-01-01"
 
 
@@ -117,3 +117,20 @@ update-infra:
 		--parameter file://parameters.json \
 		--tags Key=Name,Value=OpenDataCube \
 		--capabilities CAPABILITY_NAMED_IAM
+
+# For testing DEAfrica
+
+#  Initialise the database
+af_initdb:
+	docker-compose exec jupyter datacube -v system init
+
+#  Add the DEAfrica products
+af_add_prod:
+	cp -R ${DEAFRICA_PRODUCTS} ./data/products
+	#docker-compose exec jupyter datacube metadata add /opt/odc/data/products/eo3.yaml
+	docker-compose exec jupyter datacube product add /opt/odc/data/products/ls5_usgs_sr_scene.yaml
+	docker-compose exec jupyter datacube product add /opt/odc/data/products/ls7_usgs_sr_scene.yaml
+	docker-compose exec jupyter datacube product add /opt/odc/data/products/ls8_usgs_sr_scene.yaml
+	docker-compose exec jupyter datacube product add /opt/odc/data/products/ls_usgs_fc_scene.yaml
+	docker-compose exec jupyter datacube product add /opt/odc/data/products/ls_usgs_wofs_scene.yaml
+
