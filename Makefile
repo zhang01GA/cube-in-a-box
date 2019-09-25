@@ -25,6 +25,14 @@ index:
 			-p '/opt/odc/data/wrs2_descending.zip' \
 			-e '146.30,146.83,-43.54,-43.20'"
 
+product-srtm:
+	docker-compose exec jupyter datacube product add /opt/odc/scripts/srtm_product.yaml
+
+index-srtm:
+	docker-compose exec jupyter datacube dataset add \
+	https://deafrica-data.s3-us-west-2.amazonaws.com/ancillary/dem/srtm_dataset.yaml
+
+
 # Some extra commands to help in managing things.
 # Rebuild the image
 build:

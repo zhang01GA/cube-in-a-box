@@ -1,0 +1,26 @@
+creation_dt: '2019-09-09T00:00:00'
+extent:
+  center_dt: '2019-09-09T00:00:00'
+  coord:
+    ll: {lat: -46.00013888889551, lon: -32.00013888888889}
+    lr: {lat: -46.00013888889551, lon: 61.00013888889551}
+    ul: {lat: 47.00013888888889, lon: -32.00013888888889}
+    ur: {lat: 47.00013888888889, lon: 61.00013888889551}
+  from_dt: '2019-09-09T00:00:00'
+  to_dt: '2019-09-09T00:00:00'
+format: {name: GeoTIFF}
+grid_spatial:
+  projection:
+    geo_ref_points:
+      ll: {x: -32.00013888888889, y: -46.00013888889551}
+      lr: {x: 61.00013888889551, y: -46.00013888889551}
+      ul: {x: -32.00013888888889, y: 47.00013888888889}
+      ur: {x: 61.00013888889551, y: 47.00013888888889}
+    spatial_reference: GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]
+id: 14ada04e-acca-41aa-8271-14200ac61f63
+image:
+  bands:
+    elevation: {path: srtm_africa.tif}
+instrument: {name: SIR}
+platform: {code: SRTM}
+product_type: DEM
