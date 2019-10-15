@@ -1,1 +1,3 @@
 {"extent" : "1.1919, 1.4509, 6.0809, 6.2218"}
+#root@ip-xxx:/opt/odc/data# cat configIndex.txt
+#{"extent": [149.0, 150.0, -35.50, -35.1]}
